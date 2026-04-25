@@ -120,12 +120,12 @@ Este proyecto demuestra la importancia de separar tareas pesadas del hilo princi
 ## Capturas de pantalla
 
 ### DevTools Timeline — Antes de compute() (frames rojos)
-![DevTools antes](Saved_Pictures/screenshot_devtools_before.png)
+![DevTools antes](Saved%20Pictures/screenshot_devtools_before.png)
 
 ### DevTools Timeline — Después de compute() (mejorado)
-![DevTools después](Saved_Pictures/screenshot_devtools_after.png)
+![DevTools después](Saved%20Pictures/screenshot_devtools_after.png)
 
 ### Logcat con Firebase Performance
-![Firebase Logcat](Saved_Pictures/screenshot_firebase_logcat.png)
+![Firebase Logcat](Saved%20Pictures/screenshot_firebase_logcat.png)
 
 ---
