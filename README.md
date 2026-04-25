@@ -1,120 +1,131 @@
-# Carreño Post2 U8 — Flutter DevTools, Isolates y Firebase Performance
+Garzón Post2 U8 — Flutter DevTools, Isolates y Firebase Performance
 
-Aplicación Flutter desarrollada para la **Unidad 8 Post-Contenido 2: Rendimiento, Optimización y Experiencia Fluida** de la asignatura Aplicaciones Móviles — Ingeniería de Sistemas, Universidad de Santander (UDES) 2026.
+Aplicación desarrollada en Flutter como parte de la Unidad 8 Post-Contenido 2: Optimización de rendimiento y experiencia fluida, en la asignatura Aplicaciones Móviles — Ingeniería de Sistemas, Universidad de Santander (UDES), 2026.
 
-## Descripción
+Descripción
 
-La app procesa un catálogo de 1000 productos en JSON, permitiendo evidenciar problemas de jank cuando el parse ocurre en el main thread, y demostrar la mejora al migrar el procesamiento a un Isolate secundario con `compute()`. Incluye trazas personalizadas con Firebase Performance Monitoring para medir tiempos de operación reales.
+La aplicación simula la carga y procesamiento de un catálogo extenso de productos en formato JSON, con el fin de analizar el impacto que tienen las operaciones pesadas sobre el hilo principal.
 
----
+Se implementan dos enfoques:
 
-## Requisitos
+Procesamiento directo en el main thread (provocando bloqueos)
+Procesamiento optimizado utilizando Isolates mediante compute()
 
-- Flutter SDK 3.16+ y Dart 3.2+
-- Android Studio con plugin Flutter instalado
-- Dispositivo físico o emulador con API 26+
-- Proyecto Firebase configurado con FlutterFire CLI
+Adicionalmente, se integran herramientas de monitoreo como Flutter DevTools y Firebase Performance Monitoring para medir el comportamiento real de la aplicación.
 
----
+Requisitos
+Flutter SDK 3.16 o superior
+Dart 3.2 o superior
+Android Studio con soporte Flutter
+Emulador o dispositivo físico (API 26+)
+Proyecto Firebase previamente configurado
 
-## Configuración y ejecución
-
-1. Clona el repositorio:
-```bash
-git clone https://github.com/Johan09CD/Carre-o-post2-u8-Apps
-```
-
-2. Instala las dependencias:
-```bash
+Configuración y ejecución
+Clonar el repositorio:
+git clone https://github.com/dylandjg8413-gif/Garzon-post2-u8
+Instalar dependencias:
 flutter pub get
-```
-
-3. Configura Firebase:
-```bash
+Configurar Firebase:
 flutterfire configure
-```
-
-4. Ejecuta la app:
-```bash
+Ejecutar la aplicación:
 flutter run
-```
 
----
+Tecnologías utilizadas
+Tecnología	Propósito
+Flutter + Dart	Desarrollo de la aplicación
+Isolates (compute)	Ejecución de procesos en segundo plano
+dart:developer	Instrumentación y análisis de ejecución
+Firebase Performance	Medición de métricas reales
+DevTools	Análisis de renderizado y rendimiento
 
-## Tecnologías utilizadas
-
-| Tecnología | Uso |
-|---|---|
-| Flutter 3.27 + Dart 3.6 | Framework principal |
-| compute() | Migración de parse JSON a Isolate secundario |
-| dart:developer Timeline | Trazas manuales en DevTools |
-| Firebase Performance | Métricas personalizadas en producción |
-| Flutter DevTools | Análisis de frames y detección de jank |
-
----
-
-## Estructura del proyecto
-
-```
+Estructura del proyecto
 lib/
 ├── models/
-│   ├── product_model.dart      # Modelo Product con factory fromJson
-│   └── catalog_generator.dart  # Generador de JSON de prueba (1000 items)
+│   ├── product_model.dart       → Modelo de datos
+│   └── catalog_generator.dart   → Generador de datos simulados
 ├── screens/
-│   └── catalog_screen.dart     # Pantalla principal con versión optimizada
-├── firebase_options.dart        # Configuración Firebase (generado por FlutterFire)
-└── main.dart                   # Inicialización Firebase y punto de entrada
-```
+│   └── catalog_screen.dart      → Interfaz principal
+├── firebase_options.dart        → Configuración de Firebase
+└── main.dart                    → Punto de entrada
 
----
+Optimizaciones implementadas
 
-## Optimizaciones implementadas
+1. Procesamiento en hilo principal (escenario inicial)
 
-### 1. Versión bloqueante (baseline)
-El parse del JSON se ejecutaba directamente en el **main thread** usando `jsonDecode()`, bloqueando la UI durante el procesamiento de 1000 productos. Esto generaba jank visible con frames superando los 16ms y un promedio de solo **6 FPS**.
+Inicialmente, el parse del JSON se realizaba directamente en el hilo principal utilizando jsonDecode().
 
-### 2. Migración a Isolate con compute()
-Se migró el procesamiento pesado a un **Isolate secundario** usando `compute()`. La función `_parseProducts()` se definió como función top-level (requerimiento de compute) y recibe el JSON como String. El UI thread permanece libre para renderizar animaciones durante el procesamiento.
+Esto generaba:
 
-```dart
-final products = await compute(_parseProducts, jsonString);
-```
+Bloqueos temporales de la interfaz
+Caídas en la tasa de frames
+Interrupciones visibles en animaciones
 
-### 3. Trazas con dart:developer
-Se agregaron trazas manuales con `dev.Timeline.startSync()` para identificar las secciones más costosas en el DevTools Timeline:
-- `generateJson` — generación del JSON
-- `compute_parseProducts` — parse en Isolate
+2. Uso de Isolates con compute()
 
-### 4. Firebase Performance Monitoring
-Se integró `firebase_performance` para medir tiempos reales de la operación `catalog_load` en producción, incluyendo la métrica custom `product_count`.
+Para mejorar el rendimiento, el procesamiento fue trasladado a un Isolate secundario:
 
----
+final productos = await compute(parseProductos, jsonString);
 
-## Análisis de métricas
+✔ Evita bloquear el hilo principal
+✔ Permite mantener la UI fluida
+✔ Mejora la experiencia del usuario
 
-### DevTools Timeline — Antes de compute() (baseline)
-- **6 FPS promedio** durante la carga del catálogo
-- Frames en **rojo** superando los 27ms
-- `jsonDecode` bloqueaba el main thread causando jank visible
-- El `CircularProgressIndicator` se congelaba durante el parse
+3. Instrumentación con Timeline
 
-### DevTools Timeline — Después de compute()
-- **15 FPS promedio** durante la carga
-- Frames más estables con menos jank
-- El `CircularProgressIndicator` gira continuamente sin congelarse
-- El parse ocurre en un Isolate separado sin bloquear la UI
+Se agregaron trazas manuales para analizar el comportamiento del sistema:
+
+Generación de datos
+Procesamiento del JSON
+Tiempo total de carga
+
+Esto permite identificar cuellos de botella dentro de Flutter DevTools.
+
+4. Monitoreo con Firebase Performance
+
+Se implementaron métricas personalizadas para medir:
+
+Tiempo de carga del catálogo
+Cantidad de elementos procesados
+Duración de operaciones críticas
+
+Análisis de métricas
+
+Antes de la optimización
+Bajo rendimiento durante la carga
+Frames con tiempos elevados
+Congelamiento momentáneo de la interfaz
+Experiencia de usuario poco fluida
+
+Después de la optimización
+Mejora notable en la fluidez
+Procesamiento en segundo plano
+Animaciones continuas sin interrupciones
+Reducción del impacto en CPU
+
+Resultados obtenidos
+Reducción de bloqueos en la interfaz
+Mejor uso de recursos del sistema
+Mayor estabilidad en la ejecución
+Experiencia de usuario optimizada
+
+Conclusiones
+
+El uso de Isolates en Flutter permite manejar operaciones costosas sin afectar la experiencia visual.
+Combinado con herramientas de monitoreo, se logra identificar y optimizar puntos críticos del sistema.
+
+Este proyecto demuestra la importancia de separar tareas pesadas del hilo principal para construir aplicaciones eficientes y escalables.
 
 ---
 
 ## Capturas de pantalla
 
 ### DevTools Timeline — Antes de compute() (frames rojos)
-![DevTools antes](capturas/screenshot_devtools_before.png)
+![DevTools antes](SavedPictures/screenshot_devtools_before.png)
 
 ### DevTools Timeline — Después de compute() (mejorado)
-![DevTools después](capturas/screenshot_devtools_after.png)
+![DevTools después](SavedPictures/screenshot_devtools_after.png)
 
 ### Logcat con Firebase Performance
-![Firebase Logcat](capturas/screenshot_firebase_logcat.png)
+![Firebase Logcat](SavedPictures/screenshot_firebase_logcat.png)
 
 ---
